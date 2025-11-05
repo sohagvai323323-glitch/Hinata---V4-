@@ -62,14 +62,14 @@ module.exports = {
       await api.addUserToGroup(fixedUserID, threadID);
       api.sendMessage(`✅ User ${fixedUserID} added to group for ${timeInput}.`, threadID);
     } catch {
-      return api.sendMessage("❌ Failed to add user. Maybe they're already in group or bot isn't admin.", threadID, messageID);
+      return api.sendMessage("❌ Failed to lock 🔒 group. maybe already lock your group.", threadID, messageID);
     }
 
     // 🕓 Schedule removal
     setTimeout(async () => {
       try {
         await api.removeUserFromGroup(fixedUserID, threadID);
-        api.sendMessage(`⏰ Time up! User ${fixedUserID} has been removed automatically.`, threadID);
+        api.sendMessage(`⏰ Time up! Group now Unlock automatically.`, threadID);
       } catch {
         api.sendMessage(`⚠️ Failed to remove ${fixedUserID} after time expired.`, threadID);
       }
