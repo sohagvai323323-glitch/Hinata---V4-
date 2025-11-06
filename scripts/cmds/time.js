@@ -1,22 +1,35 @@
+// time.js
+// Shows current time in English, Bangla & Hijri (Arabic + Bangla)
+// Author: Helal (Credit Locked)
+
 const fetch = require("node-fetch");
 
 module.exports = {
   config: {
     name: "time",
     aliases: ["clock"],
-    version: "4.0",
-    author: "Helal",
+    version: "4.1",
+    author: "Helal", // 🔒 Must remain "Helal"
     countDown: 3,
     role: 0,
     category: "utility",
-    shortDescription: { en: "Show current time in English, Bangla & Hijri (Arabic + Bangla)" }
+    shortDescription: { en: "Show current time in English, Bangla & Hijri (Arabic + Bangla)" },
   },
 
   onStart: async function ({ message }) {
+    // 🔒 Credit Lock System
+    const LOCKED_AUTHOR = "Helal";
+    const myAuthor = module.exports?.config?.author || this?.config?.author || null;
+    if (myAuthor !== LOCKED_AUTHOR) {
+      return message.reply(
+        "❌ This command is credit-locked and cannot run because its author credit was modified."
+      );
+    }
+
     try {
       const now = new Date();
 
-      // English
+      // 🕓 English time
       const enTime = now.toLocaleString("en-US", {
         timeZone: "Asia/Dhaka",
         weekday: "long",
@@ -26,10 +39,10 @@ module.exports = {
         hour: "2-digit",
         minute: "2-digit",
         second: "2-digit",
-        hour12: true
+        hour12: true,
       });
 
-      // Bangla
+      // 🇧🇩 Bangla time
       const bnTime = now.toLocaleString("bn-BD", {
         timeZone: "Asia/Dhaka",
         weekday: "long",
@@ -39,19 +52,20 @@ module.exports = {
         hour: "2-digit",
         minute: "2-digit",
         second: "2-digit",
-        hour12: true
+        hour12: true,
       });
 
-      // Fetch Hijri date (Aladhan API)
-      const res = await fetch("https://api.aladhan.com/v1/gToH?date=" +
-        `${now.getDate()}-${now.getMonth() + 1}-${now.getFullYear()}`);
+      // 🕌 Fetch Hijri date
+      const res = await fetch(
+        `https://api.aladhan.com/v1/gToH?date=${now.getDate()}-${now.getMonth() + 1}-${now.getFullYear()}`
+      );
       const data = await res.json();
       const hijri = data.data.hijri;
 
-      // Arabic Hijri
+      // Arabic Hijri format
       const arHijri = `${hijri.weekday.ar}، ${hijri.day} ${hijri.month.ar} ${hijri.year} هـ`;
 
-      // Hijri month Arabic → Bangla map
+      // Bangla Hijri month mapping
       const hijriBnMap = {
         "محرم": "মুহাররম",
         "صفر": "সফর",
@@ -64,19 +78,23 @@ module.exports = {
         "رمضان": "রমজান",
         "شوال": "শাওয়াল",
         "ذو القعدة": "জিলক্বদ",
-        "ذو الحجة": "জিলহজ"
+        "ذو الحجة": "জিলহজ",
       };
 
       const banglaHijriMonth = hijriBnMap[hijri.month.ar] || hijri.month.ar;
-      const banglaHijri = `${hijri.weekday.en === "Friday" ? "শুক্রবার" :
-        hijri.weekday.en === "Saturday" ? "শনিবার" :
-        hijri.weekday.en === "Sunday" ? "রবিবার" :
-        hijri.weekday.en === "Monday" ? "সোমবার" :
-        hijri.weekday.en === "Tuesday" ? "মঙ্গলবার" :
-        hijri.weekday.en === "Wednesday" ? "বুধবার" : "বৃহস্পতিবার"}, ${hijri.day} ${banglaHijriMonth} ${hijri.year} হিজরি`;
+      const weekdayMap = {
+        Friday: "শুক্রবার",
+        Saturday: "শনিবার",
+        Sunday: "রবিবার",
+        Monday: "সোমবার",
+        Tuesday: "মঙ্গলবার",
+        Wednesday: "বুধবার",
+        Thursday: "বৃহস্পতিবার",
+      };
 
-      const msg =
-`🕓 *CURRENT TIME (MULTI-LANGUAGE)*
+      const banglaHijri = `${weekdayMap[hijri.weekday.en] || hijri.weekday.en}, ${hijri.day} ${banglaHijriMonth} ${hijri.year} হিজরি`;
+
+      const msg = `🕓 *CURRENT TIME (MULTI-LANGUAGE)*
 
 🌎 English:
 ${enTime}
@@ -98,5 +116,5 @@ ${banglaHijri}
       console.error(err);
       message.reply("⚠️ Couldn't fetch Hijri or local time right now.");
     }
-  }
+  },
 };
