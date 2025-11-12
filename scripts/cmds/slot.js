@@ -1,108 +1,87 @@
 module.exports = {
   config: {
     name: "slot",
-    version: "3.4",
-    author: "HELAL",
-    description: {
-      role: 2,
-      en: "Lucky Slot Machine (Goat Bot)",
-    },
-    category: "Game",
-  },
-  langs: {
-    en: {
-      invalid_amount: "⚠️ Enter a valid bet amount!",
-      not_enough_money: "💸 You don’t have that much balance!",
-      win_message: "😀 You won $%1!",
-      lose_message: "😔 You lost $%1!",
-      jackpot_message: "💎 JACKPOT!!! You won $%1 with three %2 symbols!",
-      spinning: "🎰 Spinning the Kakashi Slot System 🎀 ..."
-    },
+    aliases: ["spin", "fruit"],
+    version: "5.0",
+    author: "Helal",
+    countDown: 10,
+    role: 0,
+    shortDescription: "Play a fruit slot game 🎰",
+    longDescription: "Try your luck! Each spin costs 15৳. Match fruits to win rewards!",
+    category: "game",
+    guide: "{p}slot"
   },
 
-  onStart: async function ({ args, message, event, usersData, getLang }) {
-    const { senderID } = event;
+  onStart: async function ({ api, event, usersData, message }) {
+    const senderID = event.senderID;
+    const bet = 15; // Auto bet 15৳
+
+    // Get user balance
     const userData = await usersData.get(senderID);
-    const amount = parseInt(args[0]);
+    const currentBalance = Number(userData.money) || 0;
 
-    if (isNaN(amount) || amount <= 0) {
-      return message.reply(getLang("invalid_amount"));
+    if (currentBalance < bet)
+      return message.reply(`💰 Not enough balance! You have only ${currentBalance}৳.`);
+
+    // Deduct 15৳ for spin
+    await usersData.set(senderID, { money: currentBalance - bet });
+
+    // Fruit emojis 🍓🍇🍋🥭🍏
+    const fruits = ["🍓", "🍇", "🍋", "🥭", "🍏"];
+    const getRandom = () => [
+      fruits[Math.floor(Math.random() * fruits.length)],
+      fruits[Math.floor(Math.random() * fruits.length)],
+      fruits[Math.floor(Math.random() * fruits.length)]
+    ];
+
+    // Initial spin message
+    let current = getRandom();
+    const spinMsg = await message.reply(`\n[ ${current.join(" | ")} ]`);
+
+    // Animation - 3 steps only
+    for (let i = 0; i < 2; i++) {
+      await new Promise(r => setTimeout(r, 1000));
+      current = getRandom();
+      await api.editMessage(`\n[ ${current.join(" | ")} ]`, spinMsg.messageID);
     }
 
-    if (amount > userData.money) {
-      return message.reply(getLang("not_enough_money"));
-    }
+    // Final spin result
+    await new Promise(r => setTimeout(r, 1000));
+    const final = getRandom();
 
-    // "Spinning..." মেসেজ
-    await message.reply(getLang("spinning"));
+    let win = 0;
+    let resultText = "";
 
-    // Slots
-    const slots = ["💚", "🧡", "❤️", "💜", "💙", "💖"];
-    const slot1 = slots[Math.floor(Math.random() * slots.length)];
-    const slot2 = slots[Math.floor(Math.random() * slots.length)];
-    const slot3 = slots[Math.floor(Math.random() * slots.length)];
-
-    // জেতা/হার হিসাব
-    const winnings = calcWinnings(slot1, slot2, slot3, amount);
-
-    // ব্যালান্স আপডেট
-    const newBalance = userData.money + winnings;
-    await usersData.set(senderID, {
-      money: newBalance,
-      data: userData.data,
-    });
-
-    // আউটপুট
-    const resultText = formatResult(slot1, slot2, slot3, winnings, getLang, amount, newBalance);
-    return message.reply(resultText);
-  },
-};
-
-// ======================
-// LUCKY WIN LOGIC
-// ======================
-function calcWinnings(slot1, slot2, slot3, betAmount) {
-  // Jackpot: ৩টা এক হলে সবসময় বড় পুরস্কার
-  if (slot1 === slot2 && slot2 === slot3) {
-    if (slot1 === "💛") return betAmount * 12; // বিশেষ প্রাইজ
-    return betAmount * 8;
-  }
-
-  // ২টা মিললে 80% সম্ভাবনায় জিতবে
-  if (slot1 === slot2 || slot2 === slot3 || slot1 === slot3) {
-    if (Math.random() < 0.8) {
-      return betAmount * 3;
-    }
-  }
-
-  // Random extra win: 50% সম্ভাবনা
-  if (Math.random() < 0.5) {
-    return betAmount * 2;
-  }
-
-  // হার (কম হবে)
-  return -betAmount;
-}
-
-function formatResult(slot1, slot2, slot3, winnings, getLang, betAmount, balance) {
-  const slotLine = '💖 Cat Bot💖\n═✦══════✦✦══════✦═\n\n🎰 [ ${slot1} | ${slot2} | ${slot3} ] 🎰\n`;
-
-  let resultMsg;
-  if (winnings > 0) {
-    if (slot1 === slot2 && slot2 === slot3) {
-      resultMsg = getLang("jackpot_message", winnings, slot1);
+    // Win conditions
+    if (final[0] === final[1] && final[1] === final[2]) {
+      win = 100;
+      resultText = `🎲 JACKPOT! 3× ${final[0]} → You won ${win}৳!`;
+    } else if (final[0] === final[1] || final[1] === final[2] || final[0] === final[2]) {
+      win = 30;
+      resultText = `🙂 Nice! 2 fruits matched → You won ${win}৳!`;
     } else {
-      resultMsg = getLang("win_message", winnings);
+      resultText = `🐥 No match... You lost ${bet}৳.`;
     }
-  } else {
-    resultMsg = getLang("lose_message", -winnings);
-  }
 
-  return (
-    `${slotLine}\n` +
-    `💹 Bet Amount: $${betAmount}\n` +
-    `📜 Result: ${resultMsg}\n` +
-    `💵 Current Balance: $${balance}\n\n` +
-    `═❤️══════💖══════❤️═`
-  );
-}
+    // Update user balance
+    const newBalance = currentBalance - bet + win;
+    await usersData.set(senderID, { money: newBalance });
+
+    // Final UI
+    const ui = `
+╭────────🎰────────╮
+│  𝙁𝙍𝙐𝙄𝙏 𝙎𝙇𝙊𝙏 𝙈𝘼𝘾𝙃𝙄𝙉𝙀       │
+╰────────🎰────────╯
+
+🥏 Final Spin → [ ${final.join(" | ")} ]
+
+${resultText}
+
+💵 Bet: ${bet}৳
+💰 Balance: ${newBalance}৳
+━━━━━━━━━━━━━━━━━━━
+`;
+
+    await api.editMessage(ui, spinMsg.messageID);
+  }
+};
