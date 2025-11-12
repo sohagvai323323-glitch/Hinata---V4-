@@ -3,9 +3,9 @@ const fs = require("fs");
 module.exports = {
   config: {
     name: "help2",
-    aliases: ["menu"],
+    aliases: ["menu2"],
     version: "1.6",
-    author: "Helal + GPT-5",
+    author: "Helal",
     role: 0,
     shortDescription: "Show full command list or details of specific command",
   },
