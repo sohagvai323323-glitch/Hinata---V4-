@@ -8,7 +8,7 @@ module.exports = {
     name: "help",
     aliases: ["menu"],
     version: "4.0",
-    author: "Helal + GPT-5",
+    author: "Helal",
     countDown: 10,
     role: 0,
     category: "system",
