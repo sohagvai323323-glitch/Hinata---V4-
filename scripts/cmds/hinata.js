@@ -4,8 +4,8 @@ const baseApiUrl = async () => {
 };
 
 module.exports.config = {
-    name: "bby",
-    aliases: ["baby", "bbe", "babe", "sam", "bot", "chat"],
+    name: "hinata",
+    aliases: ["hinata", "hi", "hina", "talk", "bot", "chat"],
     version: "6.9.0",
     author: "Helal",
     countDown: 0,
@@ -147,9 +147,9 @@ module.exports.onReply = async ({ api, event, Reply }) => {
 module.exports.onChat = async ({ api, event, message }) => {
     try {
         const body = event.body ? event.body.toLowerCase() : "";
-        if (body.startsWith("baby") || body.startsWith("cat") || body.startsWith("bot") || body.startsWith("cat bot") || body.startsWith("𝐜𝐚𝐭 𝐛𝐨𝐭") || body.startsWith("𝐜𝐚𝐭")) {
+        if (body.startsWith("baby") || body.startsWith("hinata") || body.startsWith("bot") || body.startsWith("hina") || body.startsWith("হিনাতা") || body.startsWith("হিনাটা")) {
             const arr = body.replace(/^\S+\s*/, "");
-            const randomReplies = ["Bol 🐸", "Bol suntechi 🐍", "Dakis ken 😾?", "Bolo jaan ki korte pari tomar jonno 😞"];
+            const randomReplies = ["Bolo 🎀", "I'm Hinata how are you", "Dakis ken 😾?", "Yes I'm 𝙷𝚒𝚗𝚊𝚝𝚊 bby"];
             if (!arr) {
                 await api.sendMessage(randomReplies[Math.floor(Math.random() * randomReplies.length)], event.threadID, (error, info) => {
                     if (!info) message.reply("info obj not found");
