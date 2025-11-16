@@ -7,7 +7,7 @@ const path = require("path");
 
 module.exports = {
   config: {
-    name: "upt",
+    name: "upt4",
     version: "1.0",
     author: "Helal",
     role: 0,
