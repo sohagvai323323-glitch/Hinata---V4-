@@ -16,7 +16,7 @@ module.exports = {
   },
 
   onStart: async function ({ message }) {
-    const videoURL = "https://i.imgur.com/gvUtwsv.mp4";
+    const videoURL = "https://i.imgur.com/M6nDXZW.mp4";
     const cacheDir = path.join(__dirname, "cache");
     const videoPath = path.join(cacheDir, "help_video.mp4");
     if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir);
@@ -74,17 +74,17 @@ module.exports = {
       categories[cat].push(name);
     }
 
-    let msg = "🌺 ⌬⌬ 𝐂𝐚𝐭 𝐁𝐨𝐭 𝐂𝐨𝐦𝐦𝐚𝐧𝐝𝐬 ⌬⌬ 🌺\n________________________\n\n";
+    let msg = "🌺 ⌬⌬ 🎀𝙷𝚒𝚗𝚊𝚝𝚊𓆩♡𓆪🎀 𝐂𝐨𝐦𝐦𝐚𝐧𝐝𝐬 ⌬⌬ 🌺\n________________________\n\n";
 
     for (const cat in emojiMap) {
       if (categories[cat]) {
         msg += `${emojiMap[cat]}\n`;
-        msg += categories[cat].map(cmd => `⚡ ${cmd}`).join("\n");
+        msg += categories[cat].map(cmd => `🎀 ${cmd}`).join("\n");
         msg += "\n________________________\n\n";
       }
     }
 
-    msg += "🤖 Cat Bot is always ready to help you!\n";
+    msg += "🤖 🎀𝙷𝚒𝚗𝚊𝚝𝚊🎀 is always ready to help you!\n";
 
     return message.reply({
       body: msg,
