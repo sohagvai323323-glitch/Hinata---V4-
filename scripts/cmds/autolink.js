@@ -3,30 +3,39 @@ const { downloadVideo } = require("sagor-video-downloader");
 
 module.exports = {
     config: {
-        name: "autolink",
-        version: "1.1",
-        author: "SaGor FIXED by Akash",
+        name: "dl",
+        version: "1.2",
+        author: "Helal",
         countDown: 5,
         role: 0,
-        shortDescription: "Auto-download & send videos with title (Improved)",
+        shortDescription: "Download videos via link",
         category: "media",
+        usages: "/dl <link or reply to message with link>"
     },
 
-    onStart: async function () {},
-
-    onChat: async function ({ api, event }) {
+    onStart: async function({ api, event, args, message }) {
         const threadID = event.threadID;
         const messageID = event.messageID;
-        const message = event.body || "";
 
-        // লিঙ্ক খুঁজে বের করা (একাধিক)
-        const linkMatches = message.match(/(https?:\/\/[^\s]+)/g);
-        if (!linkMatches || linkMatches.length === 0) return;
+        let link = args[0]; // /dl <link>
+        
+        // যদি reply thake link ta extract koro
+        if (!link && event.messageReply) {
+            link = event.messageReply.body;
+        }
 
-        // ডুপ্লিকেট রিমুভ
+        if (!link) {
+            return api.sendMessage("❌ Please provide a link or reply to a message containing link.", threadID, messageID);
+        }
+
+        // multiple links support
+        const linkMatches = link.match(/(https?:\/\/[^\s]+)/g);
+        if (!linkMatches || linkMatches.length === 0) {
+            return api.sendMessage("❌ No valid link found!", threadID, messageID);
+        }
+
         const uniqueLinks = [...new Set(linkMatches)];
 
-        // রিঅ্যাক্ট: প্রসেসিং শুরু
         api.setMessageReaction("⏳", messageID, () => {}, true);
 
         let successCount = 0;
@@ -34,71 +43,44 @@ module.exports = {
 
         for (const url of uniqueLinks) {
             try {
-                // লোডিং মেসেজ (বড় ভিডিওর জন্য)
-                const loadingMsg = await api.sendMessage(
-                    `⏳ Downloading your video please wait...`,
-                    threadID
-                );
+                const loadingMsg = await api.sendMessage(`⏳ Downloading your video, please wait...`, threadID);
 
                 const { title, filePath } = await downloadVideo(url);
-                if (!filePath || !fs.existsSync(filePath)) {
-                    throw new Error("failed to download");
-                }
+                if (!filePath || !fs.existsSync(filePath)) throw new Error("Failed to download");
 
-                // ফাইল সাইজ চেক (25MB = 25 * 1024 * 1024 bytes)
                 const stats = fs.statSync(filePath);
                 const fileSizeInMB = stats.size / (1024 * 1024);
 
                 if (fileSizeInMB > 25) {
                     api.unsendMessage(loadingMsg.messageID);
-                    api.sendMessage(
-                        `❌ Video is too big (${fileSizeInMB.toFixed(1)} MB)\n🔗 ${url}`,
-                        threadID
-                    );
+                    api.sendMessage(`❌ Video too large (${fileSizeInMB.toFixed(1)} MB) \n🔗 ${url}`, threadID);
                     fs.unlinkSync(filePath);
                     failCount++;
                     continue;
                 }
 
-                // সফল হলে পাঠানো
                 await api.sendMessage(
-                    {
-                        body: `🎬 *${title || "ভিডিও"}*`,
-                        attachment: fs.createReadStream(filePath)
-                    },
+                    { body: `🎬 *${title || "ভিডিও"}*`, attachment: fs.createReadStream(filePath) },
                     threadID,
-                    () => {
-                        fs.unlinkSync(filePath); // ফাইল মুছে ফেলা
-                    }
+                    () => fs.unlinkSync(filePath)
                 );
 
-                // লোডিং মেসেজ মুছে ফেলা
                 api.unsendMessage(loadingMsg.messageID);
                 successCount++;
 
             } catch (err) {
                 failCount++;
-                api.unsendMessage(loadingMsg?.messageID || "");
-                api.sendMessage(
-                    `❌ ডাউনলোড ফেল: ${err.message || "অজানা ত্রুটি"}\n🔗 ${url.substring(0, 50)}...`,
-                    threadID
-                );
+                api.sendMessage(`❌ Download failed: ${err.message || "Unknown error"}\n🔗 ${url.substring(0,50)}...`, threadID);
             }
         }
 
-        // ফাইনাল রিঅ্যাক্ট
         const finalReaction = successCount > 0 && failCount === 0 ? "✅" :
                               successCount > 0 ? "⚠️" : "❌";
-
         api.setMessageReaction(finalReaction, messageID, () => {}, true);
 
-        // সারাংশ মেসেজ (ঐচ্ছিক)
         if (uniqueLinks.length > 1) {
             setTimeout(() => {
-                api.sendMessage(
-                    `📊 সারাংশ: ✅ ${successCount} সফল | ❌ ${failCount} ব্যর্থ`,
-                    threadID
-                );
+                api.sendMessage(`📊 Summary: ✅ ${successCount} Success | ❌ ${failCount} Fail`, threadID);
             }, 2000);
         }
     }
